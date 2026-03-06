@@ -1,34 +1,89 @@
 // pages/LoginPage.js
-const { BasePage } = require('./BasePage');
+const { createBasePage } = require('./BasePage');
 
-class LoginPage extends BasePage {
-  constructor(page) {
-    super(page);
+function createLoginPage(page) {
+  const base = createBasePage(page);
 
-    // Locators — all in one place, easy to update if UI changes
-    this.emailInput    = page.getByLabel('Email');
-    this.passwordInput = page.getByLabel('Password');
-    this.loginButton   = page.getByRole('button', { name: 'Login' });
-    this.errorMessage  = page.getByText('Invalid credentials');
+  // ---- Locators ----
+  const emailInput            = page.getByPlaceholder('example@email.com');
+  const passwordInput         = page.getByPlaceholder('············');
+  const loginButton           = page.getByRole('button', { name: 'Login' });
+  const forgotPasswordLink    = page.getByText('Forgot Password?');
+  const passwordToggleBtn     = page.locator('button[aria-label="toggle password"]');
+  const forgotEmailInput      = page.getByPlaceholder('Email').first();
+  const sendResetLinkBtn      = page.getByRole('button', { name: 'Send Reset Link' });
+  const backToLoginLink       = page.getByRole('link', { name: 'Login' });
+  const confirmationCodeInput = page.getByPlaceholder('Confirmation Code');
+  const newPasswordInput      = page.getByPlaceholder('New Password');
+  const resetPasswordBtn      = page.getByRole('button', { name: 'Reset Password' });
+
+  // ---- Actions ----
+  async function goto() {
+    await base.navigate('/login');
+    await base.waitForPageLoad();
   }
 
-  // Full login action
-  async login(email, password) {
-    await this.navigate('/login');
-    await this.waitForPageLoad();
-    await this.fill(this.emailInput, email);
-    await this.fill(this.passwordInput, password);
-    await this.click(this.loginButton);
-    await this.waitForPageLoad();
+  // email and password injected from test — no hardcoding
+  async function login(email, password) {
+    await base.fill(emailInput, email);
+    await base.fill(passwordInput, password);
+    await base.click(loginButton);
+    await base.waitForPageLoad();
   }
 
-  // Login with credentials from .env file
-  async loginWithEnvCredentials() {
-    await this.login(
-      process.env.QA_EMAIL,
-      process.env.QA_PASSWORD
-    );
+  async function clickForgotPassword() {
+    await base.click(forgotPasswordLink);
+    await base.waitForPageLoad();
   }
+
+  async function submitForgotPassword(email) {
+    await base.navigate('/forgot-password');
+    await base.waitForPageLoad();
+    await base.fill(forgotEmailInput, email);
+    await base.click(sendResetLinkBtn);
+  }
+
+  async function submitResetPassword(email, code, newPassword) {
+    await base.navigate('/reset-password');
+    await base.waitForPageLoad();
+    await base.fill(forgotEmailInput, email);
+    await base.fill(confirmationCodeInput, code);
+    await base.fill(newPasswordInput, newPassword);
+    await base.click(resetPasswordBtn);
+    await base.waitForPageLoad();
+  }
+
+  async function togglePasswordVisibility() {
+    await base.click(passwordToggleBtn);
+  }
+
+  async function backToLogin() {
+    await base.click(backToLoginLink);
+    await base.waitForPageLoad();
+  }
+
+  return {
+    // Locators
+    emailInput,
+    passwordInput,
+    loginButton,
+    forgotPasswordLink,
+    passwordToggleBtn,
+    forgotEmailInput,
+    sendResetLinkBtn,
+    backToLoginLink,
+    confirmationCodeInput,
+    newPasswordInput,
+    resetPasswordBtn,
+    // Actions
+    goto,
+    login,
+    clickForgotPassword,
+    submitForgotPassword,
+    submitResetPassword,
+    togglePasswordVisibility,
+    backToLogin,
+  };
 }
 
-module.exports = { LoginPage };
+module.exports = { createLoginPage };
